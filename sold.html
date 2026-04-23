@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Record Sale — Southmead & Co</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F2EE;
+  --surface:#FFFFFF;
+  --panel:#EDE8E2;
+  --card:#F9F6F3;
+  --border:#DDD6CE;
+  --borderl:#E8E2DB;
+  --amber:#9B4F1E;
+  --amber-dim:#B5632E;
+  --amber-light:#FBF0E8;
+  --amber-glow:rgba(155,79,30,.10);
+  --tp:#1A1208;
+  --ts:#5A4535;
+  --tm:#9A8070;
+  --green:#2A6644;
+  --greenb:rgba(42,102,68,.12);
+  --red:#B83028;
+  --mono:'DM Mono',monospace;
+  --serif:'Instrument Serif',serif;
+  --sans:'Geist',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--tp);font-family:var(--sans)}
+body{display:flex;flex-direction:column;min-height:100vh}
+
+/* Header */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1.25rem;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hdr-logo{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber)}
+.hdr-nav a{font-family:var(--mono);font-size:10px;color:var(--tm);text-decoration:none;margin-left:14px}
+.hdr-nav a:hover{color:var(--amber)}
+
+/* Wrap */
+.wrap{flex:1;max-width:480px;margin:0 auto;width:100%;padding:1.25rem 1rem 5rem}
+
+/* Steps */
+.step-shell{display:none}
+.step-shell.active{display:block;animation:fadeUp .18s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Labels */
+.step-lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);margin-bottom:.6rem}
+.section-lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);margin-bottom:.6rem;margin-top:1.25rem;display:flex;align-items:center;gap:8px}
+.section-lbl::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* Search */
+.search-wrap{position:relative}
+.search-inp{width:100%;padding:14px 48px 14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:16px;color:var(--tp);font-family:var(--sans);outline:none;transition:border .12s}
+.search-inp:focus{border-color:var(--amber-dim)}
+.search-inp::placeholder{color:var(--tm)}
+.search-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--tm);pointer-events:none}
+.search-results{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.result-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 16px;cursor:pointer;transition:all .12s}
+.result-item:hover,.result-item:active{border-color:var(--amber-dim);background:var(--panel)}
+.result-sku{font-family:var(--mono);font-size:10px;color:var(--amber);margin-bottom:3px}
+.result-title{font-size:14px;color:var(--tp);font-weight:500;line-height:1.3;margin-bottom:4px}
+.result-meta{font-family:var(--mono);font-size:10px;color:var(--tm)}
+.search-msg{font-family:var(--mono);font-size:11px;color:var(--tm);padding:1rem 0;text-align:center}
+
+/* Confirm card */
+.confirm-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:.25rem}
+.confirm-sku{font-family:var(--mono);font-size:10px;color:var(--amber);margin-bottom:6px}
+.confirm-title{font-size:17px;font-weight:600;color:var(--tp);line-height:1.3;margin-bottom:10px}
+.confirm-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:20px;background:var(--card);border:1px solid var(--border);color:var(--ts)}
+.confirm-price-row{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--borderl)}
+.confirm-price-lbl{font-family:var(--mono);font-size:10px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em}
+.confirm-price-val{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--amber)}
+
+/* Platform grid */
+.platform-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.25rem}
+.platform-btn{padding:14px 10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--ts);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all .13s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px}
+.platform-btn .p-icon{font-size:22px;line-height:1}
+.platform-btn:hover{border-color:var(--amber-dim);color:var(--amber);background:var(--amber-glow)}
+.platform-btn.selected{border-color:var(--amber);background:var(--amber-glow);color:var(--amber);font-weight:600}
+
+/* Price input */
+.price-row{display:flex;align-items:stretch;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);margin-bottom:.25rem;transition:border .12s}
+.price-row:focus-within{border-color:var(--amber-dim)}
+.price-symbol{padding:0 14px;font-family:var(--mono);font-size:18px;color:var(--tm);display:flex;align-items:center;border-right:1px solid var(--border);background:var(--panel)}
+.price-inp{flex:1;padding:14px 16px;border:none;background:transparent;font-size:22px;font-family:var(--mono);font-weight:500;color:var(--amber);outline:none;min-width:0}
+.price-inp::placeholder{color:var(--tm)}
+.price-note{font-family:var(--mono);font-size:10px;color:var(--tm);margin-bottom:1.25rem;padding-top:5px}
+
+/* Buttons */
+.record-btn{width:100%;padding:16px;background:var(--amber);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:10px}
+.record-btn:hover:not(:disabled){background:#d9a24a;transform:translateY(-1px)}
+.record-btn:active:not(:disabled){transform:none}
+.record-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.back-btn{width:100%;padding:12px;background:transparent;color:var(--tm);border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:var(--sans);cursor:pointer;margin-top:8px;transition:all .12s}
+.back-btn:hover{border-color:var(--amber-dim);color:var(--amber)}
+
+/* Success */
+.success-wrap{text-align:center;padding:2.5rem 1rem}
+.success-icon{font-size:56px;margin-bottom:1.25rem}
+.success-sku{font-family:var(--mono);font-size:11px;color:var(--amber);margin-bottom:.5rem}
+.success-title{font-size:20px;font-weight:600;color:var(--tp);margin-bottom:.5rem;line-height:1.3}
+.success-meta{font-family:var(--mono);font-size:12px;color:var(--ts);margin-bottom:.25rem}
+.success-amount{font-family:var(--mono);font-size:36px;font-weight:500;color:var(--green);margin:1.25rem 0}
+.success-btns{display:flex;flex-direction:column;gap:8px;margin-top:1.75rem}
+.another-btn{width:100%;padding:15px;background:var(--amber);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+.another-btn:hover{background:#d9a24a}
+.dash-btn{width:100%;padding:12px;background:transparent;color:var(--tm);border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:var(--sans);cursor:pointer;text-decoration:none;display:block;transition:all .12s}
+.dash-btn:hover{border-color:var(--amber-dim);color:var(--amber)}
+
+/* Spinner */
+.spinner{width:16px;height:16px;border:2.5px solid rgba(15,13,11,.25);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--red);color:#fff;font-size:12px;font-weight:600;padding:9px 18px;border-radius:8px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:100;font-family:var(--sans)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0F0D0B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Southmead">
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-logo">Southmead & Co</div>
+  <div class="hdr-nav">
+    <a href='/'>Listing</a>
+    <a href='/dashboard'>Dashboard</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Step 1: Search -->
+  <div class="step-shell active" id="step-search">
+    <div class="step-lbl">Find item to mark as sold</div>
+    <div class="search-wrap">
+      <input class="search-inp" id="searchInp" type="text" placeholder="SKU or title..." autocomplete="off" autocorrect="off" spellcheck="false" oninput="handleSearch(this.value)"/>
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+
+  <!-- Step 2: Confirm + Platform + Price -->
+  <div class="step-shell" id="step-confirm">
+
+    <div class="confirm-card">
+      <div class="confirm-sku" id="confirmSku"></div>
+      <div class="confirm-title" id="confirmTitle"></div>
+      <div class="confirm-chips" id="confirmChips"></div>
+      <div class="confirm-price-row">
+        <div class="confirm-price-lbl">Listed at</div>
+        <div class="confirm-price-val" id="confirmPrice"></div>
+      </div>
+    </div>
+
+    <div class="section-lbl">Platform</div>
+    <div class="platform-grid">
+      <button class="platform-btn" onclick="selectPlatform('Shopify',this)"><span class="p-icon">🛒</span>Shopify</button>
+      <button class="platform-btn" onclick="selectPlatform('Depop',this)"><span class="p-icon">👗</span>Depop</button>
+      <button class="platform-btn" onclick="selectPlatform('eBay',this)"><span class="p-icon">📦</span>eBay</button>
+      <button class="platform-btn" onclick="selectPlatform('Poshmark',this)"><span class="p-icon">🩷</span>Poshmark</button>
+      <button class="platform-btn" onclick="selectPlatform('Facebook Marketplace',this)"><span class="p-icon">💬</span>Facebook</button>
+      <button class="platform-btn" onclick="selectPlatform('In Person',this)"><span class="p-icon">🤝</span>In Person</button>
+    </div>
+
+    <div class="section-lbl">Sale price</div>
+    <div class="price-row">
+      <span class="price-symbol">$</span>
+      <input class="price-inp" id="salePriceInp" type="number" placeholder="0.00" step="0.01" min="0"/>
+    </div>
+    <div class="price-note" id="priceNote"></div>
+
+    <button class="record-btn" id="recordBtn" onclick="recordSale()">Record Sale</button>
+    <button class="back-btn" onclick="goBack()">← Search again</button>
+
+  </div>
+
+  <!-- Step 3: Success -->
+  <div class="step-shell" id="step-success">
+    <div class="success-wrap">
+      <div class="success-icon">✅</div>
+      <div class="success-sku" id="successSku"></div>
+      <div class="success-title" id="successTitle"></div>
+      <div class="success-meta" id="successMeta"></div>
+      <div class="success-amount" id="successAmount"></div>
+      <div class="success-btns">
+        <button class="another-btn" onclick="resetFlow()">Record another sale</button>
+        <a class='dash-btn' href='/dashboard'>View dashboard →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+var APPS = '/.netlify/functions/addrow';
+var selectedItem = null;
+var selectedPlatform = null;
+var searchTimer = null;
+
+function showStep(id) {
+  document.querySelectorAll('.step-shell').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+// ── Search ────────────────────────────────────────────────────
+function handleSearch(q) {
+  clearTimeout(searchTimer);
+  var res = document.getElementById('searchResults');
+  if (!q.trim()) { res.innerHTML = ''; return; }
+  res.innerHTML = '<div class="search-msg">Searching...</div>';
+  searchTimer = setTimeout(function() { doSearch(q.trim()); }, 350);
+}
+
+function doSearch(q) {
+  fetch(APPS, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'searchItems', query: q })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var res = document.getElementById('searchResults');
+    if (!data.items || data.items.length === 0) {
+      res.innerHTML = '<div class="search-msg">No active items found</div>';
+      return;
+    }
+    res.innerHTML = '';
+    data.items.forEach(function(item) {
+      var el = document.createElement('div');
+      el.className = 'result-item';
+      var meta = [item.brand, item.category, item.size, item.color1].filter(Boolean).join(' · ');
+      el.innerHTML =
+        '<div class="result-sku">' + escHtml(item.sku) + '</div>' +
+        '<div class="result-title">' + escHtml(item.title || 'No title') + '</div>' +
+        '<div class="result-meta">' + escHtml(meta) + '</div>';
+      el.onclick = function() { selectItem(item); };
+      res.appendChild(el);
+    });
+  })
+  .catch(function(e) {
+    document.getElementById('searchResults').innerHTML = '<div class="search-msg">Error: ' + e.message + '</div>';
+  });
+}
+
+// ── Select item ───────────────────────────────────────────────
+function selectItem(item) {
+  selectedItem = item;
+  selectedPlatform = null;
+
+  document.getElementById('confirmSku').textContent = item.sku;
+  document.getElementById('confirmTitle').textContent = item.title || 'No title';
+
+  var chipsEl = document.getElementById('confirmChips');
+  chipsEl.innerHTML = '';
+  [item.brand, item.category, item.size, item.color1, item.condition, item.era]
+    .filter(Boolean)
+    .forEach(function(v) {
+      var c = document.createElement('span');
+      c.className = 'chip';
+      c.textContent = v;
+      chipsEl.appendChild(c);
+    });
+
+  document.getElementById('confirmPrice').textContent = item.price ? '$' + Number(item.price).toFixed(2) : 'No price';
+  document.getElementById('salePriceInp').value = item.price ? Number(item.price).toFixed(2) : '';
+  document.getElementById('priceNote').textContent = item.price ? 'Pre-filled from sheet — edit if different' : 'Enter sale price';
+
+  document.querySelectorAll('.platform-btn').forEach(function(b) { b.classList.remove('selected'); });
+  showStep('step-confirm');
+}
+
+// ── Platform select ───────────────────────────────────────────
+function selectPlatform(name, btn) {
+  selectedPlatform = name;
+  document.querySelectorAll('.platform-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+}
+
+// ── Record sale ───────────────────────────────────────────────
+function recordSale() {
+  if (!selectedPlatform) { showToast('Select a platform first'); return; }
+  var price = parseFloat(document.getElementById('salePriceInp').value);
+  if (!price || price <= 0) { showToast('Enter a valid sale price'); return; }
+
+  var btn = document.getElementById('recordBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Recording...';
+
+  fetch(APPS, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'recordSale',
+      sku: selectedItem.sku,
+      dropNum: selectedItem.dropNum,
+      platform: selectedPlatform,
+      salePrice: price,
+      listedPrice: selectedItem.price || null
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (!data.success) throw new Error(data.error || 'Failed to record sale');
+    document.getElementById('successSku').textContent = selectedItem.sku;
+    document.getElementById('successTitle').textContent = selectedItem.title || '';
+    document.getElementById('successMeta').textContent = selectedPlatform + '  ·  ' + new Date().toLocaleDateString('en-CA');
+    document.getElementById('successAmount').textContent = '$' + price.toFixed(2) + ' CAD';
+    showStep('step-success');
+  })
+  .catch(function(e) { showToast(e.message); })
+  .finally(function() {
+    btn.disabled = false;
+    btn.innerHTML = 'Record Sale';
+  });
+}
+
+// ── Navigation ────────────────────────────────────────────────
+function goBack() {
+  selectedItem = null;
+  selectedPlatform = null;
+  showStep('step-search');
+}
+
+function resetFlow() {
+  selectedItem = null;
+  selectedPlatform = null;
+  document.getElementById('searchInp').value = '';
+  document.getElementById('searchResults').innerHTML = '';
+  showStep('step-search');
+  setTimeout(function() { document.getElementById('searchInp').focus(); }, 100);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ─────────────────────────────────────────────────────
+window.addEventListener('load', function() {
+  var params = new URLSearchParams(window.location.search);
+
+  // New: ?sku=SMC-03-012 direct from dashboard inventory
+  var skuParam = params.get('sku');
+  if (skuParam) {
+    // Search for this SKU directly
+    document.getElementById('searchInp').value = skuParam;
+    search();
+    return;
+  }
+
+  // Legacy: ?quick=1 with sessionStorage
+  if (params.get('quick') === '1') {
+    var stored = sessionStorage.getItem('quickSellItem');
+    if (stored) {
+      sessionStorage.removeItem('quickSellItem');
+      try { selectItem(JSON.parse(stored)); return; } catch(e) {}
+    }
+  }
+
+  setTimeout(function() { document.getElementById('searchInp').focus(); }, 100);
+});
+</script>
+<script src="auth.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js');
+  });
+}
+</script>
+</body>
+</html>
