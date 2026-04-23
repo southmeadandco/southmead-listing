@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Southmead — Listing Assistant</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1C1812;--surface:#252018;--panel:#2E2820;--border:#3D3528;
+  --tp:#F0E8DC;--tm:#A89880;--tl:#6A5C4A;
+  --amber:#C4845A;--amber-dim:#D4946A;--amber-light:#2E1F10;
+  --red:#C0392B;--green:#2E7D52;
+  --mono:'SF Mono','Courier New',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --serif:Georgia,serif;
+}
+html,body{height:100%;background:var(--bg);font-family:var(--sans);color:var(--tp)}
+.app{display:grid;grid-template-columns:200px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.sidebar-logo{padding:24px 20px 16px;border-bottom:1px solid var(--border)}
+.sidebar-logo-text{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--tp);line-height:1.1}
+.sidebar-logo-sub{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--tl);margin-top:2px}
+.sidebar-nav{padding:12px 8px;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;transition:all .12s;margin-bottom:2px;user-select:none}
+.nav-item:hover{background:var(--panel);color:var(--tp)}
+.nav-item.active{background:var(--amber-light);color:var(--amber)}
+.nav-icon{width:16px;height:16px;flex-shrink:0;opacity:.6}
+.nav-item.active .nav-icon{opacity:1}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border)}
+.sku-lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--tl)}
+.sku-val{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--amber);margin-bottom:8px}
+.drop-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.drop-lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--tl)}
+.mini-inp{width:44px;padding:5px 6px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;text-align:center;background:var(--panel);color:var(--tp);font-family:var(--mono);outline:none}
+.mini-inp:focus{border-color:var(--amber-dim)}
+.session-lbl{font-family:var(--mono);font-size:10px;color:var(--tl);margin-top:8px}
+.main{overflow-y:auto;padding:32px 40px 80px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.sec-lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--tl);margin-bottom:8px;margin-top:22px}
+.sec-lbl:first-child{margin-top:0}
+.form-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.form-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.form-1{margin-bottom:12px}
+.f-lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-bottom:5px}
+.req{color:var(--amber)}
+.text-inp{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:var(--sans);background:var(--surface);color:var(--tp);outline:none;transition:border .12s}
+.text-inp:focus{border-color:var(--amber-dim)}
+.text-inp::placeholder{color:var(--tl)}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.pill{padding:6px 12px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;font-family:var(--mono);color:var(--tm);cursor:pointer;transition:all .12s;background:var(--surface);white-space:nowrap;user-select:none}
+.pill:hover{border-color:var(--amber-dim);color:var(--amber)}
+.pill.on{background:var(--amber);border-color:var(--amber);color:#fff;font-weight:600}
+.cpill{display:flex;align-items:center;gap:5px}
+.cswatch{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.ck{display:flex;align-items:center;gap:5px;padding:5px 10px;border:1.5px solid var(--border);border-radius:16px;font-size:11px;font-family:var(--mono);color:var(--tm);cursor:pointer;transition:all .12s;background:var(--surface);user-select:none}
+.ck:hover{border-color:var(--amber-dim)}
+.ck.on{background:var(--amber);border-color:var(--amber);color:#fff}
+.ck input{display:none}
+.detail-grp{margin-bottom:10px}
+.detail-grp-title{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--tl);margin-bottom:5px}
+.btn-primary{padding:11px 24px;background:var(--amber);color:#fff;border:none;border-radius:10px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:background .12s}
+.btn-primary:hover{background:#6B3410}
+.btn-primary:disabled{opacity:.4;cursor:default}
+.btn-sec{padding:9px 16px;background:var(--panel);color:var(--tm);border:1.5px solid var(--border);border-radius:10px;font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .12s}
+.btn-sec:hover{border-color:var(--amber-dim);color:var(--amber)}
+.btn-row{display:flex;align-items:center;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.save-st{font-family:var(--mono);font-size:11px;color:var(--tl)}
+.hist-wrap{margin-top:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;max-height:220px;overflow-y:auto}
+.hist-title{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--tl);margin-bottom:12px}
+.hist-row{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--panel)}
+.hist-row:last-child{border-bottom:none}
+.hist-sku{font-family:var(--mono);font-size:11px;color:var(--amber);font-weight:500;width:110px;flex-shrink:0}
+.hist-name{font-size:12px;color:var(--tp);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 10px}
+.hist-st{font-family:var(--mono);font-size:10px}
+.hist-st.saved{color:var(--green)}
+.hist-st.error{color:var(--red)}
+.hist-st.saving{color:var(--tl)}
+/* pricing */
+.pr-ctrl{display:flex;align-items:center;gap:12px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:20px}
+.pr-stats{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--tm)}
+.pr-stats b{color:var(--tp)}
+.pr-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:7px;display:flex;align-items:center;gap:12px}
+.pr-card.conf{border-color:var(--green);background:#0d1f130d}
+.pr-top{display:none}
+.pr-photos{display:flex;gap:5px;flex-shrink:0}
+.pr-thumb{width:52px;height:52px;border-radius:7px;object-fit:cover;background:var(--panel);flex-shrink:0;cursor:pointer;transition:opacity .15s}
+.pr-thumb:hover{opacity:.8}
+.pr-thumb-ph{width:52px;height:52px;border-radius:7px;background:var(--panel);flex-shrink:0}
+.pr-lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;cursor:pointer}
+.pr-lightbox.open{display:flex}
+.pr-lightbox img{max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain}
+.pr-info{flex:1;min-width:0}
+.pr-sku{font-family:var(--mono);font-size:9px;color:var(--amber);font-weight:500;margin-bottom:1px}
+.pr-name{font-size:13px;font-weight:500;color:var(--tp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.pr-meta{font-family:var(--mono);font-size:10px;color:var(--tl)}
+.conf-btn{padding:6px 12px;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;background:var(--surface);color:var(--tm);transition:all .12s;white-space:nowrap;flex-shrink:0}
+.conf-btn.on{background:var(--green);border-color:var(--green);color:#fff}
+.pr-inputs{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.pr-inp-lbl{display:none}
+.sug-btn{font-family:var(--mono);font-size:9px;color:var(--amber);background:none;border:none;cursor:pointer;display:block;margin-top:2px}
+.sug-btn:hover{text-decoration:underline}
+.pr-field{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:9px;overflow:hidden;background:var(--surface);width:100px}
+.pr-field.hv{border-color:var(--amber-dim)}
+.pr-curr{font-family:var(--mono);font-size:13px;color:var(--tl);padding:0 4px 0 10px;flex-shrink:0}
+.pr-val{flex:1;padding:8px 8px 8px 0;border:none;background:none;font-size:15px;font-family:var(--mono);font-weight:500;color:var(--tp);outline:none;min-width:0;width:0}
+.mkt-prev{font-family:var(--mono);font-size:9px;color:var(--tl);margin-top:2px}
+.mkt-prev b{color:var(--tm)}
+.pr-bar{position:sticky;bottom:0;background:var(--bg);padding:14px 0 0;border-top:1px solid var(--border);margin-top:16px;display:flex;align-items:center;gap:12px}
+.pr-bar-st{font-family:var(--mono);font-size:11px;color:var(--tm)}
+.pr-bar-st.ok{color:var(--green)}
+.pr-bar-st.err{color:var(--red)}
+/* ops */
+.ops-top{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:20px}
+.ops-top label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--tm)}
+.ops-drop{width:64px;padding:7px 10px;border:1.5px solid var(--border);border-radius:9px;font-size:15px;text-align:center;background:var(--panel);color:var(--tp);font-family:var(--mono);outline:none}
+.ops-drop:focus{border-color:var(--amber-dim)}
+.ops-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.ops-card{padding:18px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:all .12s}
+.ops-card:hover{border-color:var(--amber-dim)}
+.ops-card:active{transform:scale(.99)}
+.ops-card-t{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--tp);margin-bottom:3px}
+.ops-card-s{font-family:var(--mono);font-size:10px;color:var(--tl)}
+.ops-res{padding:14px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-family:var(--mono);font-size:12px;color:var(--tm);display:none}
+.ops-res.ok{border-color:var(--green);color:var(--green)}
+.ops-res.err{border-color:var(--red);color:var(--red)}
+.ops-res a{color:var(--amber)}
+.top-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:20px}
+.top-bar-left{display:flex;align-items:center;gap:16px}
+.top-bar-right{display:flex;align-items:center;gap:12px;flex:1;justify-content:flex-end}
+.top-bar-group{display:flex;align-items:center;gap:8px}
+.photo-inp{width:220px}
+
+
+/* drop progress */
+.drop-progress{display:flex;align-items:center;gap:10px;margin-left:auto}
+.drop-prog-lbl{font-family:var(--mono);font-size:10px;color:var(--tl)}
+.drop-prog-lbl b{color:var(--amber)}
+.prog-bar-wrap{width:80px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.prog-bar-fill{height:100%;background:var(--amber);border-radius:2px;transition:width .3s}
+/* warning toast */
+.warn-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#8B3A00;color:#FFD5A8;font-family:var(--mono);font-size:12px;padding:9px 20px;border-radius:20px;opacity:0;transition:all .18s;pointer-events:none;white-space:nowrap;z-index:10000}
+.warn-toast.show{opacity:1}
+/* keyboard hint */
+.kb-hint{font-family:var(--mono);font-size:9px;color:var(--tl);margin-left:auto}
+kbd{background:var(--panel);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:9px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--tp);color:#fff;font-family:var(--mono);font-size:12px;padding:9px 20px;border-radius:20px;opacity:0;transition:all .18s;pointer-events:none;white-space:nowrap;z-index:9999}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-text">Southmead<br>&amp; Co</div>
+    <div class="sidebar-logo-sub">Listing Assistant v2</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" id="nav-list" onclick="switchTab('list')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      List
+    </div>
+    <div class="nav-item" id="nav-pricing" onclick="switchTab('pricing')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Pricing
+    </div>
+    <div class="nav-item" id="nav-ops" onclick="switchTab('ops')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Ops
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="session-lbl" id="sess-lbl">0 saved this session</div>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- LIST TAB -->
+  <div class="tab-panel active" id="tab-list">
+
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <div class="top-bar-group">
+          <span class="drop-lbl">Drop</span>
+          <input class="mini-inp" type="number" id="l-drop" value="1" min="1" max="99" oninput="updateSku();updateProgress()">
+          <span class="drop-lbl">Item</span>
+          <input class="mini-inp" type="number" id="l-item" value="1" min="1" max="999" oninput="updateSku();updateProgress()">
+          <span class="drop-lbl">Goal</span>
+          <input class="mini-inp" type="number" id="l-goal" value="100" min="1" max="999" oninput="updateProgress()">
+        </div>
+        <div class="sku-val" id="sku-disp">SMC-01-001</div>
+      </div>
+      <div class="drop-progress">
+        <div class="drop-prog-lbl" id="prog-lbl"><b>0</b> / 100</div>
+        <div class="prog-bar-wrap"><div class="prog-bar-fill" id="prog-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="sec-lbl">Brand</div>
+    <div class="pills" id="brand-pills"></div>
+    <div class="form-1">
+      <input class="text-inp" id="l-brand" placeholder="Brand / Label" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="sec-lbl">Category <span class="req">*</span></div>
+    <div class="pills" id="cat-pills"></div>
+    <input type="hidden" id="l-cat">
+
+    <div class="form-3">
+      <div>
+        <div class="f-lbl">Colour <span class="req">*</span></div>
+        <div class="pills" id="col-pills"></div>
+        <input type="hidden" id="l-col">
+      </div>
+      <div>
+        <div class="f-lbl">Condition <span class="req">*</span></div>
+        <div class="pills" id="cond-pills"></div>
+        <input type="hidden" id="l-cond">
+      </div>
+      <div>
+        <div class="f-lbl">Era <span class="req">*</span></div>
+        <div class="pills" id="era-pills"></div>
+        <input type="hidden" id="l-era">
+      </div>
+    </div>
+
+    <div class="form-3">
+      <div>
+        <div class="f-lbl">Size</div>
+        <input class="text-inp" id="l-size" placeholder="XL">
+      </div>
+      <div>
+        <div class="f-lbl">Pit to Pit (in)</div>
+        <input class="text-inp" id="l-ptp" type="number" placeholder="22" step="0.5">
+      </div>
+      <div>
+        <div class="f-lbl">Length (in)</div>
+        <input class="text-inp" id="l-len" type="number" placeholder="28" step="0.5">
+      </div>
+    </div>
+
+    <div class="form-1">
+      <div class="f-lbl">Photo IDs</div>
+      <input class="text-inp" id="l-photos" placeholder="6240, 6241, 6242" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="sec-lbl">Details</div>
+    <div class="detail-grp">
+      <div class="detail-grp-title">Construction</div>
+      <div class="checks" id="ck-con"></div>
+    </div>
+    <div class="detail-grp">
+      <div class="detail-grp-title">Origin</div>
+      <div class="checks" id="ck-ori"></div>
+    </div>
+    <div class="detail-grp">
+      <div class="detail-grp-title">Print &amp; Graphic</div>
+      <div class="checks" id="ck-prt"></div>
+    </div>
+    <div class="detail-grp">
+      <div class="detail-grp-title">Condition Notes</div>
+      <div class="checks" id="ck-cdn"></div>
+    </div>
+
+    <div class="form-1">
+      <div class="f-lbl">Additional Notes</div>
+      <input class="text-inp" id="l-notes" placeholder="Team, player, graphic details...">
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="save-btn" onclick="lSave()">Save &amp; Next</button>
+      <button class="btn-sec" onclick="lClear()">Clear</button>
+      <span class="save-st" id="save-st"></span>
+      <span class="kb-hint"><kbd>↵</kbd> save &nbsp; <kbd>Esc</kbd> clear</span>
+    </div>
+
+    <div class="hist-wrap" id="hist-wrap" style="display:none">
+      <div class="hist-title">Session History</div>
+      <div id="hist-list"></div>
+    </div>
+  </div>
+
+  <!-- PRICING TAB -->
+  <div class="tab-panel" id="tab-pricing">
+    <div class="pr-ctrl">
+      <span style="font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--tm)">Drop</span>
+      <input class="mini-inp" type="number" id="pr-drop" placeholder="5" min="1" max="99" style="width:56px">
+      <button class="btn-primary" onclick="prLoad()">Load</button>
+      <div class="pr-stats" id="pr-stats"></div>
+    </div>
+    <div id="pr-items"></div>
+    <div class="pr-bar" id="pr-bar" style="display:none">
+      <button class="btn-primary" id="pr-save-btn" onclick="prSave()">Save Prices</button>
+      <div class="pr-bar-st" id="pr-bar-st"></div>
+    </div>
+  </div>
+
+  <!-- OPS TAB -->
+  <div class="tab-panel" id="tab-ops">
+    <div class="ops-top">
+      <label>Drop Number</label>
+      <input class="ops-drop" type="number" id="ops-drop" placeholder="5" min="1" max="99">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--tl)">Select a drop then run any operation</span>
+    </div>
+    <div class="sec-lbl">Export</div>
+    <div class="ops-grid">
+      <div class="ops-card" onclick="opsRun('exportShopify','Shopify Export')">
+        <div class="ops-card-t">Shopify Export</div>
+        <div class="ops-card-s">Generate CSV for Shopify import</div>
+      </div>
+      <div class="ops-card" onclick="opsRun('exportCrosslist','Crosslist Export')">
+        <div class="ops-card-t">Crosslist Export</div>
+        <div class="ops-card-s">Generate CSV for Crosslist</div>
+      </div>
+    </div>
+    <div class="sec-lbl">Sync</div>
+    <div class="ops-grid">
+      <div class="ops-card" onclick="opsRun('bulkSync','Photo Sync')">
+        <div class="ops-card-t">Sync Photos</div>
+        <div class="ops-card-s">Link Drive photos to sheet</div>
+      </div>
+      <div class="ops-card" onclick="opsRun('fixPhotoUrls','Fix Photo URLs')">
+        <div class="ops-card-t">Fix Photo URLs</div>
+        <div class="ops-card-s">Make Drive URLs publicly accessible</div>
+      </div>
+      <div class="ops-card" onclick="opsRun('syncMetafields','Sync Metafields')">
+        <div class="ops-card-t">Sync Shopify Metafields</div>
+        <div class="ops-card-s">Push size, era, condition to Shopify</div>
+      </div>
+      <div class="ops-card" onclick="opsNewDrop()">
+        <div class="ops-card-t">Create New Drop</div>
+        <div class="ops-card-s">Create sheet tab + Drive folder</div>
+      </div>
+    </div>
+    <div class="ops-res" id="ops-res"></div>
+  </div>
+
+</main>
+</div>
+<div id="pr-lb" class="pr-lightbox" onclick="prCloseLight()"><img src="" alt=""></div>
+<div id="toast"></div>
+<div id="warn-toast" class="warn-toast"></div>
+<div id="pr-lb" class="pr-lightbox" onclick="prCloseLight()"><img src="" alt=""></div>
+<script>
+var APPS='https://script.google.com/macros/s/AKfycbw5Ti-W3JhsJ4Mx-cXUZKIypjRBwcQx-MCNfKOgAlg-44Obx43tf07yDevCi1oeWdxsXg/exec';
+var BRANDS=['Harley Davidson','Nike','Starter','Champion','Fruit of the Loom','NHL / NBA / NFL / MLB','Reebok','Adidas','Ralph Lauren','Tommy Hilfiger','Carhartt','Wrangler','Marlboro','Polo Sport'];
+var CATS=['Vintage T-Shirt','Vintage Hoodie','Vintage Sweatshirt','Vintage Jersey','Vintage Jacket','Vintage Denim Jacket','Vintage Windbreaker','Vintage Jeans','Vintage Shorts','Vintage Hat','Other'];
+var COLS=[{n:'Black',h:'#1A1A1A'},{n:'White',h:'#F5F5F5'},{n:'Gray',h:'#8A8A8A'},{n:'Navy',h:'#1B2A5C'},{n:'Blue',h:'#2E5BA8'},{n:'Red',h:'#C0392B'},{n:'Burgundy',h:'#6E1423'},{n:'Green',h:'#2E7D52'},{n:'Dark Green',h:'#1B4332'},{n:'Brown',h:'#5C3317'},{n:'Cream',h:'#F5EBD0'},{n:'Beige',h:'#C8B89A'},{n:'Tan',h:'#C4A46B'},{n:'Orange',h:'#D35400'},{n:'Yellow',h:'#F0C040'},{n:'Pink',h:'#E8789A'},{n:'Purple',h:'#6C3483'},{n:'Teal',h:'#148A7A'},{n:'Multi',h:'#888888'}];
+var CONDS=[{v:'VeryGood',l:'Very Good'},{v:'Good',l:'Good'},{v:'Fair',l:'Fair'},{v:'NewWithoutTags',l:'NWT'},{v:'NewWithTags',l:'New w/ Tags'}];
+var ERAS=[{v:'From1980s',l:'80s'},{v:'From1990s',l:'90s'},{v:'From2000To2004',l:'Y2K'},{v:'From2005To2009',l:'00s'},{v:'From2010To2019',l:'10s'}];
+var DET={con:['Single Stitch','Double Stitch','Chain Stitch','Reverse Weave','Raglan'],ori:['Made in USA','Made in Canada','Made in England','Made in Mexico'],prt:['AOP','Embroidered','Puff Print','Flocked','Screen Print','Distressed Print'],cdn:['Sun Faded','Fading','Distressed','Small Stain','Pilling','Cracking']};
+var GCAT={'Vintage T-Shirt':'Apparel & Accessories > Clothing > Shirts & Tops','Vintage Hoodie':'Apparel & Accessories > Clothing > Shirts & Tops','Vintage Sweatshirt':'Apparel & Accessories > Clothing > Shirts & Tops','Vintage Jersey':'Apparel & Accessories > Clothing > Activewear','Vintage Jacket':'Apparel & Accessories > Clothing > Outerwear','Vintage Denim Jacket':'Apparel & Accessories > Clothing > Outerwear','Vintage Windbreaker':'Apparel & Accessories > Clothing > Outerwear','Vintage Jeans':'Apparel & Accessories > Clothing > Pants','Vintage Shorts':'Apparel & Accessories > Clothing > Shorts','Vintage Hat':'Apparel & Accessories > Clothing > Hats','Other':'Apparel & Accessories > Clothing'};
+var ERATAG={'From1980s':'era-80s','From1990s':'era-90s','From2000To2004':'era-y2k','From2005To2009':'era-2000s','From2010To2019':'era-2010s'};
+var CATTAG={'Vintage T-Shirt':'cat-tees','Vintage Hoodie':'cat-hoodies','Vintage Sweatshirt':'cat-sweatshirts','Vintage Jersey':'cat-jerseys','Vintage Jacket':'cat-jackets','Vintage Denim Jacket':'cat-denim-jackets','Vintage Windbreaker':'cat-windbreakers','Vintage Jeans':'cat-jeans','Vintage Shorts':'cat-shorts','Vintage Hat':'cat-hats'};
+
+var sessCount=0, lHistory=[], prItems=[], prEdits={};
+// Track used photo IDs this session to catch duplicates
+var usedPhotoIds={};
+
+function api(body,cb){var url=APPS+'?payload='+encodeURIComponent(JSON.stringify(body));fetch(url,{method:'GET',redirect:'follow'}).then(function(r){return r.json();}).then(cb).catch(function(e){cb({error:e.message});});}
+
+function switchTab(t){['list','pricing','ops'].forEach(function(x){document.getElementById('tab-'+x).classList.toggle('active',x===t);document.getElementById('nav-'+x).classList.toggle('active',x===t);});}
+
+function toast(m){var e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(function(){e.classList.remove('show');},2500);}
+
+function warnToast(m){var e=document.getElementById('warn-toast');e.textContent=m;e.classList.add('show');setTimeout(function(){e.classList.remove('show');},3500);}
+
+function updateSku(){
+  var d=String(parseInt(document.getElementById('l-drop').value)||1).padStart(2,'0');
+  var i=String(parseInt(document.getElementById('l-item').value)||1).padStart(3,'0');
+  document.getElementById('sku-disp').textContent='SMC-'+d+'-'+i;
+}
+
+function updateProgress(){
+  var item=parseInt(document.getElementById('l-item').value)||1;
+  var goal=parseInt(document.getElementById('l-goal').value)||100;
+  var done=Math.max(0,item-1);
+  var pct=Math.min(100,Math.round(done/goal*100));
+  document.getElementById('prog-lbl').innerHTML='<b>'+done+'</b> / '+goal;
+  document.getElementById('prog-fill').style.width=pct+'%';
+}
+
+function mkPills(id,items,hidId){
+  var c=document.getElementById(id);
+  c.innerHTML='';
+  items.forEach(function(item){
+    var val=typeof item==='string'?item:(item.v||item.n);
+    var lbl=typeof item==='string'?item:(item.l||item.n);
+    var p=document.createElement('div');
+    p.className='pill'+(item.h?' cpill':'');
+    if(item.h){p.innerHTML='<div class="cswatch" style="background:'+item.h+'"></div>'+lbl;}
+    else{p.textContent=lbl;}
+    p.onclick=function(){
+      c.querySelectorAll('.pill').forEach(function(x){x.classList.remove('on');});
+      p.classList.add('on');
+      if(hidId)document.getElementById(hidId).value=val;
+    };
+    c.appendChild(p);
+  });
+}
+
+function mkChecks(id,items){
+  var c=document.getElementById(id);
+  c.innerHTML='';
+  items.forEach(function(item){
+    var lbl=document.createElement('label');
+    lbl.className='ck';
+    lbl.innerHTML='<input type="checkbox" value="'+item+'">'+item;
+    lbl.querySelector('input').onchange=function(){lbl.classList.toggle('on',this.checked);};
+    c.appendChild(lbl);
+  });
+}
+
+function getChecked(id){return Array.from(document.querySelectorAll('#'+id+' input:checked')).map(function(x){return x.value;});}
+
+function initUI(){
+  mkPills('brand-pills',BRANDS,null);
+  document.querySelectorAll('#brand-pills .pill').forEach(function(p){
+    var orig=p.onclick;
+    p.onclick=function(){orig.call(p);document.getElementById('l-brand').value=p.textContent.trim();};
+  });
+  mkPills('cat-pills',CATS,'l-cat');
+  mkPills('col-pills',COLS,'l-col');
+  mkPills('cond-pills',CONDS,'l-cond');
+  mkPills('era-pills',ERAS,'l-era');
+  mkChecks('ck-con',DET.con);mkChecks('ck-ori',DET.ori);mkChecks('ck-prt',DET.prt);mkChecks('ck-cdn',DET.cdn);
+  updateSku();
+  updateProgress();
+  // Keyboard shortcuts
+  document.addEventListener('keydown',function(e){
+    if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+    if(e.key==='Enter'){lSave();}
+    if(e.key==='Escape'){lClear();}
+  });
+  // Enter on brand input triggers save
+  document.getElementById('l-brand').addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();lSave();}
+  });
+}
+
+function suggestPrice(item){var cat=item.category||'';var brand=item.brand||'';var cond=item.condition||'';var base=38;if(cat.includes('Jacket'))base=68;else if(cat.includes('Hoodie')||cat.includes('Sweatshirt'))base=48;else if(cat.includes('Jersey'))base=58;else if(cat.includes('Jeans')||cat.includes('Shorts'))base=38;else if(cat.includes('Hat'))base=28;var prem=['Ralph Lauren','Carhartt','Harley Davidson','Tommy Hilfiger'];if(prem.some(function(b){return brand.toLowerCase().includes(b.toLowerCase());}))base+=20;if(cond==='VeryGood'||cond==='NewWithoutTags'||cond==='NewWithTags')base+=10;else if(cond==='Fair')base-=10;return{online:base,market:(base-0.01).toFixed(2)};}
+
+function lSave(){
+  var cat=document.getElementById('l-cat').value;
+  var col=document.getElementById('l-col').value;
+  var cond=document.getElementById('l-cond').value;
+  var era=document.getElementById('l-era').value;
+  if(!cat){toast('Select a category');return;}
+  if(!col){toast('Select a colour');return;}
+  if(!cond){toast('Select condition');return;}
+  if(!era){toast('Select era');return;}
+  var drop=parseInt(document.getElementById('l-drop').value)||1;
+  var item=parseInt(document.getElementById('l-item').value)||1;
+  var brand=document.getElementById('l-brand').value.trim()||'Vintage';
+  var size=document.getElementById('l-size').value.trim();
+  var ptp=document.getElementById('l-ptp').value.trim();
+  var len=document.getElementById('l-len').value.trim();
+  var notes=document.getElementById('l-notes').value.trim();
+  var photos=document.getElementById('l-photos').value.trim();
+  var details=getChecked('ck-con').concat(getChecked('ck-ori')).concat(getChecked('ck-prt')).concat(getChecked('ck-cdn'));
+  if(notes)details.push(notes);
+
+  // Duplicate photo ID check
+  if(photos){
+    var ids=photos.split(',').map(function(s){return s.trim();}).filter(Boolean);
+    var dups=ids.filter(function(id){return usedPhotoIds[id];});
+    if(dups.length){
+      warnToast('⚠ Duplicate photo IDs: '+dups.join(', '));
+      return;
+    }
+  }
+
+  var pricing=suggestPrice({category:cat,brand:brand,condition:cond});
+  var baseTags=[(CATTAG[cat]||''),(ERATAG[era]||''),'new-arrival','vintage','southmead'].filter(Boolean).join(', ');
+  var title=brand+' '+(cat.replace('Vintage ','')).trim()+(size?' '+size:'');
+  var sku='SMC-'+String(drop).padStart(2,'0')+'-'+String(item).padStart(3,'0');
+
+  // Register photo IDs as used
+  if(photos){photos.split(',').forEach(function(id){usedPhotoIds[id.trim()]=sku;});}
+
+  lHistory.unshift({sku:sku,title:title,status:'saving'});
+  renderHistory();
+  document.getElementById('l-item').value=item+1;
+  updateSku();
+  updateProgress();
+  lClear();
+  // Re-focus brand field for fast next entry
+  setTimeout(function(){document.getElementById('l-brand').focus();},50);
+
+  var btn=document.getElementById('save-btn');
+  btn.disabled=true;setTimeout(function(){btn.disabled=false;},1500);
+
+  var eraLabel={'From1980s':'80s','From1990s':'90s','From2000To2004':'Y2K','From2005To2009':'00s','From2010To2019':'10s'}[era]||era;
+  var condLabel={'VeryGood':'Very Good','Good':'Good','Fair':'Fair','NewWithoutTags':'NWT','NewWithTags':'New with Tags'}[cond]||cond;
+  var measureStr='';
+  if(ptp)measureStr+=' Pit to pit: '+ptp+'".';
+  if(len)measureStr+=' Length: '+len+'".';
+  var prompt='Write a vintage clothing listing for: '+title+'. Brand: '+brand+'. Category: '+cat.replace('Vintage ','')+'. Colour: '+col+'. Era: '+eraLabel+'. Condition: '+condLabel+'.'+(size?' Size: '+size+'.':'')+measureStr+(details.length?' Details: '+details.join(', ')+'.':(notes?' Notes: '+notes+'.':''))+' Return ONLY valid JSON (no markdown) with keys: desc (plain text, under 80 words, ends with blank line then measurements as "Size: X\nPit to Pit: X\"\nLength: X\"" — omit any measurement not provided), tags (comma-separated lowercase keywords for SEO — do NOT include collection: tags, cat- tags, or era- tags, those are handled separately), seoTitle (under 60 chars), seoMeta (under 160 chars).';
+
+  var row={sku:sku,date:new Date().toISOString().slice(0,10),title:title,brand:brand,category:cat,size:size,color1:col,color2:'',condition:cond,material:'',era:era,desc:'',tags:baseTags,seoTitle:'',seoMeta:'',googleCategory:GCAT[cat]||'Apparel & Accessories > Clothing',price:pricing.online,marketPrice:pricing.market,priceConfirmed:false,notes:notes,photoNumbers:photos};
+  if(ptp)row.pitToPit=ptp;
+  if(len)row.length=len;
+
+  fetch('/.netlify/functions/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt})})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      try{
+        var text=data.content&&data.content[0]?data.content[0].text:'';
+        var clean=text.replace(/```json|```/g,'').trim();
+        var gen=JSON.parse(clean);
+        if(gen.desc)row.desc=gen.desc;
+        if(gen.tags){
+          var aiTags=gen.tags.split(',').map(function(t){return t.trim().toLowerCase();}).filter(function(t){return t&&!t.startsWith('collection:')&&!t.startsWith('cat-')&&!t.startsWith('era-')&&t!=='new-arrival'&&t!=='vintage'&&t!=='southmead';});
+          var baseParts=baseTags.split(',').map(function(t){return t.trim();});
+          row.tags=[...baseParts,...aiTags].filter(Boolean).join(', ');
+        }
+        if(gen.seoTitle)row.seoTitle=gen.seoTitle;
+        if(gen.seoMeta)row.seoMeta=gen.seoMeta;
+      }catch(e){}
+      doSaveRow(row,sku,pricing);
+    })
+    .catch(function(){doSaveRow(row,sku,pricing);});
+}
+
+function doSaveRow(row,sku,pricing){
+  var _drop=parseInt(row.sku.split('-')[1])||1;
+  api({action:'addRow',dropNum:_drop,row:row},function(data){
+    var h=lHistory.find(function(x){return x.sku===sku;});
+    if(h){h.status=data.success?'saved':'error';renderHistory();}
+    if(data.success){sessCount++;document.getElementById('sess-lbl').textContent=sessCount+' saved this session';toast(sku+' saved · $'+pricing.online);}
+    else{toast('Error: '+(data.error||'Save failed'));}
+  });
+}
+
+function lClear(){
+  document.querySelectorAll('.pill').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.ck').forEach(function(p){p.classList.remove('on');p.querySelector('input').checked=false;});
+  ['l-brand','l-size','l-ptp','l-len','l-notes','l-cat','l-col','l-cond','l-era','l-photos'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('save-st').textContent='';
+}
+
+function renderHistory(){var wrap=document.getElementById('hist-wrap');var list=document.getElementById('hist-list');if(!lHistory.length){wrap.style.display='none';return;}wrap.style.display='block';list.innerHTML=lHistory.slice(0,10).map(function(h){return'<div class="hist-row"><span class="hist-sku">'+h.sku+'</span><span class="hist-name">'+h.title+'</span><span class="hist-st '+h.status+'">'+(h.status==='saving'?'saving…':h.status==='saved'?'✓ saved':'✗ error')+'</span></div>';}).join('');}
+
+var _prLoadedDrop=null;function prLoad(){var drop=parseInt(document.getElementById('pr-drop').value);if(!drop){toast('Enter a drop number');return;}document.getElementById('pr-stats').textContent='Loading…';document.getElementById('pr-items').innerHTML='';document.getElementById('pr-bar').style.display='none';if(drop!==_prLoadedDrop){prEdits={};}_prLoadedDrop=drop;api({action:'getDashboardData'},function(data){if(data.error){document.getElementById('pr-stats').textContent='Error: '+data.error;return;}prItems=(data.inventory||[]).filter(function(i){return i.dropNum===drop&&i.status!=='Sold';});if(!prItems.length){document.getElementById('pr-stats').textContent='No items in drop '+drop;return;}var unconf=prItems.filter(function(i){return!i.priceConfirmed;}).length;document.getElementById('pr-stats').innerHTML='<b>'+prItems.length+'</b> items · <b>'+unconf+'</b> unconfirmed';renderPrItems();document.getElementById('pr-bar').style.display='flex';});}
+
+function prThumbUrl(rawUrl){var m=rawUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);return m?'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w240':rawUrl;}
+function prFullUrl(rawUrl){var m=rawUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);return m?'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w1200':rawUrl;}
+function prOpenLight(url){var lb=document.getElementById('pr-lb');lb.querySelector('img').src=url;lb.classList.add('open');}
+function prCloseLight(){document.getElementById('pr-lb').classList.remove('open');}
+function prNextFocus(idx){var next=document.getElementById('pi-on-'+(idx+1));if(next){next.focus();next.select();}}
+function renderPrItems(){
+  document.getElementById('pr-items').innerHTML=prItems.map(function(item,idx){
+    var price=item.price||'';
+    var mkt=item.marketPrice||(price?(parseFloat(price)-0.01).toFixed(2):'');
+    var conf=!!item.priceConfirmed;
+    var sug=suggestPrice(item);
+    var thumbs='<div class="pr-thumb-ph"></div>';
+    if(item.photoUrl){
+      var urls=item.photoUrl.split(',').map(function(u){return u.trim();}).filter(Boolean);
+      thumbs='<div class="pr-photos">'+urls.slice(0,2).map(function(u){
+        var t=prThumbUrl(u);var f=prFullUrl(u);
+        return'<img class="pr-thumb" src="'+t+'" onclick="prOpenLight(\''+f+'\')" onerror="this.outerHTML=\'<div class=pr-thumb-ph></div>\'">';
+      }).join('')+'</div>';
+    }
+    return'<div class="pr-card'+(conf?' conf':'')+'" id="pri-'+idx+'">'+
+      thumbs+
+      '<div class="pr-info">'+
+        '<div class="pr-sku">'+item.sku+'</div>'+
+        '<div class="pr-name">'+(item.title||'Untitled')+'</div>'+
+        '<div class="pr-meta">'+[item.brand,item.category,item.size,item.condition].filter(Boolean).join(' · ')+'</div>'+
+      '</div>'+
+      '<div class="pr-inputs">'+
+        '<div>'+
+          '<div class="pr-field'+(price?' hv':'')+'" id="pf-on-'+idx+'">'+
+            '<span class="pr-curr">$</span>'+
+            '<input class="pr-val" type="number" id="pi-on-'+idx+'" value="'+(price||'')+'" placeholder="0" min="0" step="1" '+
+              'oninput="prOnline('+idx+',this.value)" '+
+              'onkeydown="if(event.key===\'Tab\'&&!event.shiftKey){event.preventDefault();prToggleConf('+idx+');prNextFocus('+idx+');}">'+
+          '</div>'+
+          '<div class="mkt-prev" id="mp-'+idx+'">'+(mkt?'Market: <b>$'+Number(mkt).toFixed(2)+'</b>':'<button class="sug-btn" onclick="prSuggest('+idx+')">Suggest $'+sug.online+'</button>')+'</div>'+
+        '</div>'+
+        '<button class="conf-btn'+(conf?' on':'')+'" onclick="prToggleConf('+idx+')">'+(conf?'✓':'—')+'</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function prOnline(idx,val){var item=prItems[idx];if(!item)return;var num=parseFloat(val)||0;if(!prEdits[item.sku])prEdits[item.sku]={};prEdits[item.sku].price=num||null;var mkt=num>0?(num-0.01).toFixed(2):'';prEdits[item.sku].marketPrice=mkt||null;var mi=document.getElementById('pi-mkt-'+idx);if(mi&&!mi._e)mi.value=mkt;document.getElementById('mp-'+idx).innerHTML=mkt?'Market: <b>$'+mkt+'</b>':'Market: —';document.getElementById('pf-on-'+idx).classList.toggle('hv',!!val);}
+
+function prMarket(idx,val){var item=prItems[idx];if(!item)return;if(!prEdits[item.sku])prEdits[item.sku]={};prEdits[item.sku].marketPrice=val||null;var mi=document.getElementById('pi-mkt-'+idx);if(mi)mi._e=true;document.getElementById('pf-mkt-'+idx).classList.toggle('hv',!!val);}
+
+function prSuggest(idx){var item=prItems[idx];if(!item)return;var sug=suggestPrice(item);document.getElementById('pi-on-'+idx).value=sug.online;prOnline(idx,sug.online);}
+
+function prToggleConf(idx){var item=prItems[idx];if(!item)return;if(!prEdits[item.sku])prEdits[item.sku]={};var cur=prEdits[item.sku].confirmed!==undefined?prEdits[item.sku].confirmed:!!item.priceConfirmed;var nw=!cur;prEdits[item.sku].confirmed=nw;var btn=document.querySelector('#pri-'+idx+' .conf-btn');var card=document.getElementById('pri-'+idx);if(btn){btn.textContent=nw?'✓ Done':'Confirm';btn.classList.toggle('on',nw);}card.classList.toggle('conf',nw);var unconf=prItems.filter(function(i,ix){var e=prEdits[i.sku];return!(e&&e.confirmed!==undefined?e.confirmed:!!i.priceConfirmed);}).length;document.getElementById('pr-stats').innerHTML='<b>'+prItems.length+'</b> items · <b>'+unconf+'</b> unconfirmed';}
+
+function prSave(){var updates=[];prItems.forEach(function(item){var e=prEdits[item.sku];if(!e)return;var price=e.price!==undefined?e.price:item.price;var mkt=e.marketPrice!==undefined?e.marketPrice:(price?(price-0.01).toFixed(2):item.marketPrice);var conf=e.confirmed!==undefined?e.confirmed:!!item.priceConfirmed;updates.push({sku:item.sku,price:price,marketPrice:mkt,priceConfirmed:conf});});if(!updates.length){toast('No changes to save');return;}var st=document.getElementById('pr-bar-st');st.className='pr-bar-st';st.textContent='Saving…';document.getElementById('pr-save-btn').disabled=true;api({action:'bulkUpdatePrices',updates:updates},function(data){document.getElementById('pr-save-btn').disabled=false;if(data.success){st.className='pr-bar-st ok';st.textContent='✓ '+data.updated+' saved';prEdits={};setTimeout(prLoad,600);}else{st.className='pr-bar-st err';st.textContent='✗ '+(data.error||'Failed');}});}
+
+function opsRes(msg,cls){var e=document.getElementById('ops-res');e.style.display='block';e.className='ops-res '+(cls||'');e.innerHTML=msg;}
+
+function opsRun(action,label){var drop=parseInt(document.getElementById('ops-drop').value);if(!drop){toast('Enter a drop number first');return;}opsRes(label+' running…','');api({action:action,dropNum:drop},function(data){if(data.error){opsRes('✗ '+data.error,'err');}else if(data.downloadUrl){opsRes('✓ Done · <a href="'+data.downloadUrl+'" target="_blank">Download '+(data.filename||'file')+'</a> ('+(data.rows||0)+' rows)','ok');}else{var msg='✓ '+label+' complete';if(data.synced!=null)msg+=' · '+data.synced+' synced';if(data.fixed!=null)msg+=' · '+data.fixed+' fixed';if(data.updated!=null)msg+=' · '+data.updated+' updated';opsRes(msg,'ok');}});}
+
+function opsNewDrop(){var drop=parseInt(document.getElementById('ops-drop').value);if(!drop){toast('Enter a drop number first');return;}opsRes('Creating drop '+drop+'…','');api({action:'newDrop',dropNum:drop},function(data){if(data.error){opsRes('✗ '+data.error,'err');}else if(data.existed){opsRes('Drop '+String(drop).padStart(2,'0')+' already exists','');}else{opsRes('✓ Created Drop '+data.tab+(data.driveFolder?' · Drive folder: '+data.driveFolder:''),'ok');}});}
+
+initUI();
+</script>
+</body>
+</html>
