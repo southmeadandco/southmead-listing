@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard — Southmead & Co</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F2EE;
+  --surface:#FFFFFF;
+  --panel:#EDE8E2;
+  --card:#F9F6F3;
+  --border:#DDD6CE;
+  --borderl:#E8E2DB;
+  --amber:#9B4F1E;
+  --amber-dim:#B5632E;
+  --amber-light:#FBF0E8;
+  --amber-glow:rgba(155,79,30,.10);
+  --amber-glow2:rgba(155,79,30,.05);
+  --tp:#1A1208;
+  --ts:#5A4535;
+  --tm:#9A8070;
+  --green:#2A6644;
+  --green-light:#EAF3EE;
+  --greenb:rgba(42,102,68,.12);
+  --red:#B83028;
+  --red-light:#FCECEA;
+  --redb:rgba(184,48,40,.10);
+  --blue:#1E5FA0;
+  --blue-light:#EAF1FA;
+  --yellow:#8A6E00;
+  --yellow-light:#FBF6E0;
+  --mono:'DM Mono',monospace;
+  --serif:'Instrument Serif',serif;
+  --sans:'Geist',sans-serif;
+
+  /* Platform colours */
+  --plat-shopify:#2A6644;
+  --plat-depop:#B83028;
+  --plat-ebay:#8A6E00;
+  --plat-facebook:#1E5FA0;
+  --plat-poshmark:#7B2D8B;
+  --plat-inperson:#9B4F1E;
+  --plat-grailed:#1A1208;
+}
+
+body{font-family:var(--sans);background:var(--bg);color:var(--tp);min-height:100vh;font-size:14px}
+
+/* ── Header ── */
+header{
+  background:var(--surface);border-bottom:1.5px solid var(--border);
+  padding:0 1.5rem;height:58px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:50;
+  box-shadow:0 1px 0 var(--border),0 2px 10px rgba(26,18,8,.06);
+}
+.logo{font-family:var(--serif);font-size:20px;color:var(--tp);letter-spacing:.01em}
+.logo em{color:var(--amber);font-style:italic}
+
+/* ── Today badge ── */
+.today-badge{
+  display:flex;align-items:center;gap:10px;
+  background:var(--panel);border:1.5px solid var(--border);
+  border-radius:10px;padding:6px 14px;
+}
+.today-dot{width:7px;height:7px;border-radius:50%;background:var(--border);flex-shrink:0}
+.today-dot.live{background:var(--green);box-shadow:0 0 0 3px var(--greenb)}
+.today-rev{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--tp)}
+.today-cnt{font-family:var(--mono);font-size:10px;color:var(--tm)}
+.today-sep{color:var(--border);margin:0 2px}
+
+.hdr-right{display:flex;align-items:center;gap:10px}
+.updated{font-family:var(--mono);font-size:9px;color:var(--tm)}
+.record-btn{
+  padding:8px 16px;background:var(--amber);color:#fff;border:none;border-radius:8px;
+  font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);
+  text-decoration:none;display:flex;align-items:center;gap:6px;
+  box-shadow:0 2px 6px rgba(155,79,30,.22);transition:all .13s;
+}
+.record-btn:hover{background:var(--amber-dim);box-shadow:0 3px 10px rgba(155,79,30,.28)}
+
+/* ── Bottom nav (mobile app feel) ── */
+.bottom-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);border-top:1.5px solid var(--border);
+  padding:8px 0 calc(8px + env(safe-area-inset-bottom));
+  z-index:40;
+}
+.bn-items{display:flex;justify-content:space-around}
+.bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 12px;cursor:pointer;border:none;background:none;font-family:var(--sans);color:var(--tm);transition:color .15s;min-width:56px}
+.bn-item.active{color:var(--amber)}
+.bn-icon{font-size:20px;line-height:1}
+.bn-lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.05em}
+
+/* ── Top nav (desktop) ── */
+.top-nav{display:flex;gap:0;border:1.5px solid var(--border);border-radius:9px;overflow:hidden;background:var(--panel)}
+.nav-pill{font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--tm);padding:6px 18px;cursor:pointer;border:none;background:transparent;font-family:var(--sans);transition:all .15s}
+.nav-pill:hover{color:var(--tp);background:var(--amber-light)}
+.nav-pill.active{color:var(--amber);background:var(--amber-light);font-weight:600}
+
+/* ── Layout ── */
+.page{display:none;max-width:1100px;margin:0 auto;padding:1.5rem 1.25rem 5rem}
+.page.active{display:block}
+
+/* ── Section label ── */
+.slbl{font-family:var(--mono);font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);margin-bottom:.75rem;display:flex;align-items:center;gap:10px}
+.slbl::after{content:'';flex:1;height:1px;background:var(--border)}
+.mt{margin-top:2rem}
+
+/* ── Hero metric ── */
+.hero-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:1.5rem}
+.hero-card{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:14px;
+  padding:18px 20px;transition:box-shadow .15s;
+  box-shadow:0 1px 4px rgba(26,18,8,.05);
+}
+.hero-card.primary{
+  background:var(--amber);border-color:var(--amber);
+  box-shadow:0 4px 16px rgba(155,79,30,.25);
+}
+.hero-card.primary .hero-lbl{color:rgba(255,255,255,.7)}
+.hero-card.primary .hero-val{color:#fff}
+.hero-card.primary .hero-sub{color:rgba(255,255,255,.6)}
+.hero-lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);margin-bottom:8px}
+.hero-val{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--tp);line-height:1;letter-spacing:-.5px}
+.hero-sub{font-family:var(--mono);font-size:10px;color:var(--tm);margin-top:6px}
+.hero-delta{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:20px;margin-top:6px}
+.hero-delta.up{background:var(--green-light);color:var(--green)}
+.hero-delta.neutral{background:var(--panel);color:var(--tm)}
+
+/* ── Period selector ── */
+.period-row{display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center}
+.period-btn{font-family:var(--mono);font-size:10px;font-weight:500;padding:5px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--tm);cursor:pointer;transition:all .12s;text-transform:uppercase;letter-spacing:.04em}
+.period-btn:hover{border-color:var(--amber-dim);color:var(--amber);background:var(--amber-light)}
+.period-btn.active{background:var(--amber);color:#fff;border-color:var(--amber)}
+.period-spacer{flex:1}
+.period-refresh{font-family:var(--mono);font-size:9px;color:var(--tm);display:flex;align-items:center;gap:5px;cursor:pointer}
+.period-refresh:hover{color:var(--amber)}
+
+/* ── Two col ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem}
+.panel-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(26,18,8,.05)}
+.panel-hdr{background:var(--panel);border-bottom:1px solid var(--border);padding:11px 16px;display:flex;align-items:center;justify-content:space-between}
+.panel-hdr-title{font-size:12px;font-weight:600;color:var(--tp)}
+.panel-hdr-sub{font-family:var(--mono);font-size:10px;color:var(--tm)}
+.panel-body{padding:14px 16px}
+.panel-empty{padding:2rem;text-align:center;font-family:var(--mono);font-size:11px;color:var(--tm)}
+
+/* ── Platform rows ── */
+.plat-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--borderl)}
+.plat-row:last-child{border-bottom:none}
+.plat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.plat-name{font-size:12px;font-weight:500;color:var(--ts);min-width:110px}
+.plat-bar-bg{flex:1;background:var(--panel);border-radius:4px;height:5px;overflow:hidden}
+.plat-bar{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.34,1.56,.64,1)}
+.plat-cnt{font-family:var(--mono);font-size:10px;color:var(--tm);min-width:24px;text-align:right}
+.plat-rev{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ts);min-width:60px;text-align:right}
+
+/* ── Drop rows ── */
+.drop-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--borderl)}
+.drop-row:last-child{border-bottom:none}
+.drop-name{font-family:var(--mono);font-size:11px;color:var(--amber);font-weight:500;min-width:58px}
+.drop-prog{flex:1}
+.drop-bar-bg{background:var(--panel);border-radius:4px;height:5px;overflow:hidden;margin-bottom:3px}
+.drop-bar{height:100%;background:var(--green);border-radius:4px;transition:width .6s cubic-bezier(.34,1.56,.64,1)}
+.drop-stats{font-family:var(--mono);font-size:10px;color:var(--tm)}
+.drop-pct{font-family:var(--mono);font-size:11px;font-weight:500;min-width:36px;text-align:right}
+.drop-rev{font-family:var(--mono);font-size:11px;color:var(--ts);min-width:60px;text-align:right}
+
+/* ── Sales feed ── */
+.feed-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--borderl);transition:background .1s}
+.feed-item:last-child{border-bottom:none}
+.feed-plat-dot{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.feed-info{flex:1;min-width:0}
+.feed-title{font-size:13px;font-weight:500;color:var(--tp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.feed-meta{font-family:var(--mono);font-size:10px;color:var(--tm)}
+.feed-right{text-align:right;flex-shrink:0}
+.feed-price{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--tp)}
+.feed-date{font-family:var(--mono);font-size:9px;color:var(--tm);margin-top:2px}
+
+/* ── Tables ── */
+.table-wrap{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(26,18,8,.05)}
+.table-filters{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--panel)}
+.fsel{padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface);color:var(--ts);font-size:12px;font-family:var(--sans);outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;transition:border .12s}
+.fsel:focus{border-color:var(--amber-dim)}
+.filter-count{font-family:var(--mono);font-size:10px;color:var(--tm)}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--tm);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);background:var(--panel);font-weight:500;white-space:nowrap}
+.tbl td{padding:10px 16px;border-bottom:1px solid var(--borderl);font-size:12px;color:var(--ts);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--amber-glow2)}
+.td-sku{font-family:var(--mono);font-size:10px;color:var(--amber);white-space:nowrap;font-weight:500}
+.td-title{color:var(--tp);font-weight:500;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td-money{font-family:var(--mono);font-weight:500;color:var(--tp);white-space:nowrap}
+.td-date{font-family:var(--mono);font-size:10px;color:var(--tm);white-space:nowrap}
+.td-age{font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--tm);white-space:nowrap;display:inline-block}
+.td-age.warn{border-color:rgba(155,79,30,.3);background:var(--amber-light);color:var(--amber)}
+.td-age.old{border-color:rgba(184,48,40,.3);background:var(--red-light);color:var(--red)}
+.empty-row td{text-align:center;padding:2.5rem;color:var(--tm);font-family:var(--mono);font-size:11px}
+
+/* ── Platform badge ── */
+.plat-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:20px;white-space:nowrap;font-weight:500}
+.plat-badge .pb-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* ── Sell button ── */
+.sell-btn{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:6px;border:1.5px solid var(--amber-dim);background:var(--amber-light);color:var(--amber);cursor:pointer;transition:all .12s;white-space:nowrap;font-weight:500}
+.sell-btn:hover{background:var(--amber);color:#fff}
+
+/* ── Aging badge ── */
+.age-flag{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:20px;white-space:nowrap}
+
+/* ── Spinner / loading ── */
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-state{text-align:center;padding:3rem;font-family:var(--mono);font-size:11px;color:var(--tm)}
+
+/* ── Pricing tab ── */
+.price-edit{width:72px;padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;background:var(--surface);color:var(--amber);font-family:var(--mono);font-size:12px;font-weight:500;outline:none;text-align:right;transition:border .12s}
+.price-edit:focus{border-color:var(--amber-dim);box-shadow:0 0 0 3px var(--amber-glow)}
+.price-edit.changed{border-color:var(--amber)}
+.confirm-btn{font-family:var(--mono);font-size:9px;padding:4px 10px;border-radius:6px;border:1.5px solid var(--amber-dim);background:var(--amber-light);color:var(--amber);cursor:pointer;transition:all .12s;white-space:nowrap;font-weight:500}
+.confirm-btn:hover{background:var(--amber);color:#fff}
+.confirm-btn.confirmed{border-color:rgba(42,102,68,.4);background:var(--green-light);color:var(--green);cursor:default}
+.market-price{font-family:var(--mono);font-size:11px;color:var(--tm)}
+.pst{font-family:var(--mono);font-size:11px;margin-top:8px;min-height:16px;color:var(--tm)}
+.pst.ok{color:var(--green)}
+.pst.err{color:var(--red)}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--tp);color:#fff;font-size:12px;font-weight:600;padding:10px 20px;border-radius:10px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:100;font-family:var(--sans);box-shadow:0 4px 16px rgba(26,18,8,.2);white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+  .hero-row{grid-template-columns:1fr 1fr}
+  .two-col{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .hero-row{grid-template-columns:1fr 1fr}
+  .top-nav{display:none}
+  .bottom-nav{display:block}
+  .page{padding:1.25rem 1rem 6rem}
+  header{padding:0 1rem}
+  .today-badge{display:none}
+  #toast{bottom:90px}
+}
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F5F2EE">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Southmead">
+</head>
+<body>
+
+<header>
+  <div class="logo">Southmead <em>&</em> Co</div>
+
+  <!-- Today summary badge (desktop) -->
+  <div class="today-badge">
+    <div class="today-dot" id="todayDot"></div>
+    <span class="today-rev" id="todayRev">—</span>
+    <span class="today-sep">·</span>
+    <span class="today-cnt" id="todayCnt">loading</span>
+  </div>
+
+  <div class="hdr-right">
+    <div class="top-nav">
+      <button class="nav-pill active" onclick="showPage('overview')">Overview</button>
+      <button class="nav-pill" onclick="showPage('sales')">Sales</button>
+      <button class="nav-pill" onclick="showPage('inventory')">Inventory</button>
+      <button class="nav-pill" onclick="showPage('pricing')">Pricing</button>
+    </div>
+    <a class='record-btn' href='/sold'>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Record Sale
+    </a>
+  </div>
+</header>
+
+<!-- ══ Mobile bottom nav ══ -->
+<nav class="bottom-nav">
+  <div class="bn-items">
+    <button class="bn-item active" onclick="showPage('overview')">
+      <span class="bn-icon">📊</span><span class="bn-lbl">Overview</span>
+    </button>
+    <button class="bn-item" onclick="showPage('sales')">
+      <span class="bn-icon">💰</span><span class="bn-lbl">Sales</span>
+    </button>
+    <button class="bn-item" onclick="showPage('inventory')">
+      <span class="bn-icon">📦</span><span class="bn-lbl">Stock</span>
+    </button>
+    <button class="bn-item" onclick="showPage('pricing')">
+      <span class="bn-icon">🏷️</span><span class="bn-lbl">Pricing</span>
+    </button>
+    <a href='/sold' style='text-decoration:none'>
+      <button class="bn-item" style="color:var(--amber)">
+        <span class="bn-icon">✚</span><span class="bn-lbl">Sell</span>
+      </button>
+    </a>
+  </div>
+</nav>
+
+<!-- ══ Overview ══ -->
+<div class="page active" id="page-overview">
+
+  <!-- Period selector -->
+  <div class="period-row" style="margin-top:1.25rem">
+    <button class="period-btn" onclick="setPeriod(1)">Today</button>
+    <button class="period-btn active" onclick="setPeriod(7)">7 days</button>
+    <button class="period-btn" onclick="setPeriod(30)">30 days</button>
+    <button class="period-btn" onclick="setPeriod(90)">90 days</button>
+    <button class="period-btn" onclick="setPeriod(0)">All time</button>
+    <div class="period-spacer"></div>
+    <div class="period-refresh" onclick="loadAll()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      <span id="updatedAt">—</span>
+    </div>
+  </div>
+
+  <!-- Hero metrics -->
+  <div class="hero-row" id="heroRow">
+    <div class="hero-card primary">
+      <div class="hero-lbl">Revenue</div>
+      <div class="hero-val" id="h-rev">—</div>
+      <div class="hero-sub" id="h-rev-sub">this week</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-lbl">Items Sold</div>
+      <div class="hero-val" id="h-sold">—</div>
+      <div class="hero-sub" id="h-sold-sub">this week</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-lbl">Avg Sale</div>
+      <div class="hero-val" id="h-avg">—</div>
+      <div class="hero-sub">per item</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-lbl">Active Stock</div>
+      <div class="hero-val" id="h-active">—</div>
+      <div class="hero-sub" id="h-active-sub">items listed</div>
+    </div>
+  </div>
+
+  <!-- Platform + Drop side by side -->
+  <div class="two-col">
+    <div class="panel-card">
+      <div class="panel-hdr">
+        <span class="panel-hdr-title">Sales by platform</span>
+        <span class="panel-hdr-sub" id="platTotal"></span>
+      </div>
+      <div class="panel-body" id="platBars">
+        <div class="load-state"><span class="spinner"></span></div>
+      </div>
+    </div>
+    <div class="panel-card">
+      <div class="panel-hdr">
+        <span class="panel-hdr-title">Sell-through by drop</span>
+        <span class="panel-hdr-sub">sold / listed</span>
+      </div>
+      <div class="panel-body" id="dropBars">
+        <div class="load-state"><span class="spinner"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent sales feed -->
+  <div class="slbl mt">Recent sales</div>
+  <div class="panel-card">
+    <div class="panel-body" id="recentFeed" style="padding:0 16px">
+      <div class="load-state"><span class="spinner"></span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ Sales ══ -->
+<div class="page" id="page-sales">
+  <div class="period-row" style="margin-top:1.25rem">
+    <button class="period-btn" onclick="setSalesPeriod(1)">Today</button>
+    <button class="period-btn active" onclick="setSalesPeriod(7)">7 days</button>
+    <button class="period-btn" onclick="setSalesPeriod(30)">30 days</button>
+    <button class="period-btn" onclick="setSalesPeriod(90)">90 days</button>
+    <button class="period-btn" onclick="setSalesPeriod(0)">All time</button>
+  </div>
+
+  <!-- Sales stat row -->
+  <div class="hero-row" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:1.25rem" id="salesHeroRow">
+    <div class="hero-card primary">
+      <div class="hero-lbl">Revenue</div>
+      <div class="hero-val" id="sh-rev">—</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-lbl">Items Sold</div>
+      <div class="hero-val" id="sh-sold">—</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-lbl">Avg Sale</div>
+      <div class="hero-val" id="sh-avg">—</div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-filters">
+      <select class="fsel" id="fPlatform" onchange="renderSales()">
+        <option value="">All platforms</option>
+        <option>Shopify</option><option>Depop</option><option>eBay</option>
+        <option>Poshmark</option><option>Facebook Marketplace</option>
+        <option>In Person</option><option>Grailed</option>
+      </select>
+      <select class="fsel" id="fDrop" onchange="renderSales()"><option value="">All drops</option></select>
+      <span class="filter-count" id="salesCount"></span>
+    </div>
+    <table class="tbl">
+      <thead><tr>
+        <th>SKU</th><th>Title</th><th>Brand</th><th>Platform</th>
+        <th style="text-align:right">Listed</th><th style="text-align:right">Sold</th><th>Date</th>
+      </tr></thead>
+      <tbody id="salesBody">
+        <tr class="empty-row"><td colspan="7"><span class="spinner"></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ Inventory ══ -->
+<div class="page" id="page-inventory">
+  <div class="period-row" style="margin-top:1.25rem">
+    <div style="font-family:var(--mono);font-size:11px;color:var(--ts);display:flex;align-items:center;gap:6px">
+      <span id="invActive" style="font-weight:500;color:var(--tp)">—</span> active
+      <span style="color:var(--border)">·</span>
+      <span id="invFlagged" style="color:var(--red)">—</span> 30+ days
+    </div>
+    <div class="period-spacer"></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-filters">
+      <select class="fsel" id="iDrop" onchange="renderInv()"><option value="">All drops</option></select>
+      <select class="fsel" id="iCat" onchange="renderInv()"><option value="">All categories</option></select>
+      <select class="fsel" id="iAge" onchange="renderInv()">
+        <option value="">Any age</option>
+        <option value="30">30+ days</option>
+        <option value="60">60+ days</option>
+        <option value="90">90+ days</option>
+      </select>
+      <span class="filter-count" id="invCount"></span>
+    </div>
+    <table class="tbl">
+      <thead><tr>
+        <th>SKU</th><th>Title</th><th>Brand</th><th>Category</th>
+        <th style="text-align:right">Price</th><th>Age</th><th></th>
+      </tr></thead>
+      <tbody id="invBody">
+        <tr class="empty-row"><td colspan="7"><span class="spinner"></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ Pricing ══ -->
+<div class="page" id="page-pricing">
+  <div class="period-row" style="margin-top:1.25rem">
+    <select class="fsel" id="priceDrop" onchange="renderPricing()"><option value="">All drops</option></select>
+    <select class="fsel" id="priceFilter" onchange="renderPricing()">
+      <option value="">All items</option>
+      <option value="unconfirmed">Unconfirmed only</option>
+      <option value="confirmed">Confirmed only</option>
+    </select>
+    <span class="filter-count" id="priceCount"></span>
+    <div class="period-spacer"></div>
+    <button class="record-btn" style="font-size:11px;padding:6px 14px;box-shadow:none;background:var(--panel);color:var(--amber);border:1.5px solid var(--amber-dim)" onclick="confirmAllVisible()">
+      Confirm all
+    </button>
+    <button class="record-btn" style="font-size:11px;padding:6px 14px" onclick="pushPricesToSheet()">
+      Push to sheet
+    </button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="tbl">
+      <thead><tr>
+        <th>SKU</th><th>Title</th><th>Category</th><th>Condition</th>
+        <th style="text-align:right">Online $</th><th style="text-align:right">Market $</th>
+        <th style="text-align:center">Status</th>
+      </tr></thead>
+      <tbody id="pricingBody">
+        <tr class="empty-row"><td colspan="7"><span class="spinner"></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="pst" id="pricingPushSt" style="margin-top:.75rem"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var APPS = '/.netlify/functions/addrow';
+var allSales = [];
+var allInventory = [];
+var currentPeriod = 7;
+var currentSalesPeriod = 7;
+var pricingEdits = {};
+
+// ── Platform config ──────────────────────────────────────────
+var PLAT_COLORS = {
+  'Shopify':              { color:'var(--plat-shopify)',  bg:'var(--green-light)',  emoji:'🛍️' },
+  'Depop':                { color:'var(--plat-depop)',    bg:'var(--red-light)',    emoji:'🔴' },
+  'eBay':                 { color:'var(--plat-ebay)',     bg:'var(--yellow-light)', emoji:'🔶' },
+  'Facebook Marketplace': { color:'var(--plat-facebook)', bg:'var(--blue-light)',   emoji:'💙' },
+  'Poshmark':             { color:'#7B2D8B',              bg:'#F5EEF8',             emoji:'🛒' },
+  'In Person':            { color:'var(--plat-inperson)', bg:'var(--amber-light)',  emoji:'🤝' },
+  'Grailed':              { color:'var(--plat-grailed)',  bg:'var(--panel)',        emoji:'👕' }
+};
+
+function platColor(p){ return (PLAT_COLORS[p]||{color:'var(--tm)'}).color; }
+function platBg(p)   { return (PLAT_COLORS[p]||{bg:'var(--panel)'}).bg; }
+function platEmoji(p){ return (PLAT_COLORS[p]||{emoji:'•'}).emoji; }
+
+// ── Nav ──────────────────────────────────────────────────────
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById('page-' + p).classList.add('active');
+  document.querySelectorAll('.nav-pill').forEach(function(b,i){
+    b.classList.toggle('active', ['overview','sales','inventory','pricing'][i] === p);
+  });
+  document.querySelectorAll('.bn-item').forEach(function(b,i){
+    b.classList.toggle('active', ['overview','sales','inventory','pricing'][i] === p);
+  });
+  if (p === 'pricing')   renderPricing();
+  if (p === 'sales')     renderSales();
+  if (p === 'inventory') renderInv();
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+function fmt(n)    { return '$' + Number(n||0).toFixed(0); }
+function fmtD(n)   { return '$' + Number(n||0).toFixed(2); }
+function esc(s)    { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2500);
+}
+function daysAgo(dateStr) {
+  if (!dateStr) return 999;
+  var d = new Date(dateStr);
+  if (isNaN(d)) return 999;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+function periodLabel(days) {
+  if (days === 1)  return 'today';
+  if (days === 7)  return 'last 7 days';
+  if (days === 30) return 'last 30 days';
+  if (days === 90) return 'last 90 days';
+  return 'all time';
+}
+function filterByPeriod(sales, days) {
+  if (!days) return sales;
+  var cutoff = Date.now() - days * 86400000;
+  return sales.filter(function(s){
+    var d = new Date(s.soldDate);
+    return !isNaN(d) && d.getTime() >= cutoff;
+  });
+}
+function platBadge(platform) {
+  var color = platColor(platform);
+  return '<span class="plat-badge" style="background:' + platBg(platform) + ';color:' + color + '">'
+    + '<span class="pb-dot" style="background:' + color + '"></span>'
+    + esc(platform)
+    + '</span>';
+}
+
+// ── Load data ────────────────────────────────────────────────
+function loadAll() {
+  fetch(APPS, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'getDashboardData' })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if (!data.success) throw new Error(data.error || 'Load failed');
+    allSales      = data.sales     || [];
+    allInventory  = data.inventory || [];
+    var now = new Date();
+    document.getElementById('updatedAt').textContent =
+      now.toLocaleTimeString('en-CA', {hour:'2-digit',minute:'2-digit'});
+    renderOverview();
+    renderTodayBadge();
+    populateFilters();
+    renderSales();
+    renderInv();
+  })
+  .catch(function(e){ showToast('Error: ' + e.message); });
+}
+
+// ── Today badge ──────────────────────────────────────────────
+function renderTodayBadge() {
+  var today = filterByPeriod(allSales, 1);
+  var rev   = today.reduce(function(s,r){ return s + (r.salePrice||0); }, 0);
+  document.getElementById('todayRev').textContent = fmtD(rev);
+  document.getElementById('todayCnt').textContent = today.length + ' sold today';
+  document.getElementById('todayDot').className   = 'today-dot' + (today.length > 0 ? ' live' : '');
+}
+
+// ── Period selector ──────────────────────────────────────────
+function setPeriod(days) {
+  currentPeriod = days;
+  document.querySelectorAll('#page-overview .period-btn').forEach(function(b,i){
+    b.classList.toggle('active', [1,7,30,90,0][i] === days);
+  });
+  renderOverview();
+}
+
+function setSalesPeriod(days) {
+  currentSalesPeriod = days;
+  document.querySelectorAll('#page-sales .period-btn').forEach(function(b,i){
+    b.classList.toggle('active', [1,7,30,90,0][i] === days);
+  });
+  renderSales();
+}
+
+// ── Overview ─────────────────────────────────────────────────
+function renderOverview() {
+  var filtered = filterByPeriod(allSales, currentPeriod);
+  var active   = allInventory.filter(function(i){
+    return String(i.status||'').toLowerCase() !== 'sold';
+  });
+  var rev  = filtered.reduce(function(s,r){ return s + (r.salePrice||0); }, 0);
+  var avg  = filtered.length > 0 ? rev / filtered.length : 0;
+  var lbl  = periodLabel(currentPeriod);
+
+  document.getElementById('h-rev').textContent      = fmt(rev);
+  document.getElementById('h-rev-sub').textContent  = lbl;
+  document.getElementById('h-sold').textContent     = filtered.length;
+  document.getElementById('h-sold-sub').textContent = lbl;
+  document.getElementById('h-avg').textContent      = filtered.length > 0 ? fmt(avg) : '—';
+  document.getElementById('h-active').textContent   = active.length;
+  document.getElementById('h-active-sub').textContent =
+    active.filter(function(i){ return daysAgo(i.dateListed) >= 30; }).length + ' flagged';
+
+  // Platform bars
+  renderPlatBars(filtered);
+
+  // Drop bars
+  renderDropBars();
+
+  // Recent feed
+  renderRecentFeed(allSales.slice(0, 12));
+}
+
+function renderPlatBars(sales) {
+  var platMap = {};
+  sales.forEach(function(s){
+    var p = s.platform || 'Unknown';
+    if (!platMap[p]) platMap[p] = { count:0, rev:0 };
+    platMap[p].count++;
+    platMap[p].rev += s.salePrice || 0;
+  });
+  var arr = Object.keys(platMap).map(function(k){
+    return { name:k, count:platMap[k].count, rev:platMap[k].rev };
+  }).sort(function(a,b){ return b.rev - a.rev; });
+  var maxRev = arr.length > 0 ? arr[0].rev : 1;
+
+  var el = document.getElementById('platBars');
+  document.getElementById('platTotal').textContent = sales.length + ' sales';
+  if (arr.length === 0) {
+    el.innerHTML = '<div class="panel-empty">No sales in this period</div>';
+    return;
+  }
+  el.innerHTML = arr.map(function(p){
+    var pct = maxRev > 0 ? (p.rev / maxRev * 100) : 0;
+    return '<div class="plat-row">'
+      + '<span class="plat-dot" style="background:'+platColor(p.name)+'"></span>'
+      + '<div class="plat-name">' + esc(p.name) + '</div>'
+      + '<div class="plat-bar-bg"><div class="plat-bar" style="width:'+pct+'%;background:'+platColor(p.name)+'"></div></div>'
+      + '<div class="plat-cnt">' + p.count + '</div>'
+      + '<div class="plat-rev">' + fmt(p.rev) + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function renderDropBars() {
+  var dropMap = {};
+  allInventory.forEach(function(i){
+    var d = 'Drop ' + String(i.dropNum||i.drop||'?').padStart(2,'0');
+    if (!dropMap[d]) dropMap[d] = { listed:0, sold:0, rev:0 };
+    dropMap[d].listed++;
+    if (String(i.status||'').toLowerCase() === 'sold') {
+      dropMap[d].sold++;
+      dropMap[d].rev += parseFloat(i.salePrice||i.soldPrice) || 0;
+    }
+  });
+  var arr = Object.keys(dropMap).sort().slice(-8).map(function(k){
+    return { name:k, listed:dropMap[k].listed, sold:dropMap[k].sold, rev:dropMap[k].rev };
+  });
+
+  var el = document.getElementById('dropBars');
+  if (arr.length === 0) {
+    el.innerHTML = '<div class="panel-empty">No drops found</div>';
+    return;
+  }
+  el.innerHTML = arr.map(function(d){
+    var pct = d.listed > 0 ? Math.round(d.sold / d.listed * 100) : 0;
+    var pctColor = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--tm)';
+    return '<div class="drop-row">'
+      + '<div class="drop-name">' + esc(d.name) + '</div>'
+      + '<div class="drop-prog">'
+      + '<div class="drop-bar-bg"><div class="drop-bar" style="width:'+pct+'%"></div></div>'
+      + '<div class="drop-stats">' + d.sold + ' / ' + d.listed + ' sold</div>'
+      + '</div>'
+      + '<div class="drop-pct" style="color:'+pctColor+'">' + pct + '%</div>'
+      + '<div class="drop-rev">' + fmt(d.rev) + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function renderRecentFeed(sales) {
+  var el = document.getElementById('recentFeed');
+  if (sales.length === 0) {
+    el.innerHTML = '<div class="panel-empty">No sales yet — <a href="sold.html" style="color:var(--amber)">record your first</a></div>';
+    return;
+  }
+  el.innerHTML = sales.map(function(s){
+    var emoji  = platEmoji(s.platform);
+    var color  = platColor(s.platform);
+    var bg     = platBg(s.platform);
+    var ago    = daysAgo(s.soldDate);
+    var agoStr = ago === 0 ? 'Today' : ago === 1 ? 'Yesterday' : ago + 'd ago';
+    return '<div class="feed-item">'
+      + '<div class="feed-plat-dot" style="background:'+bg+'">'+emoji+'</div>'
+      + '<div class="feed-info">'
+        + '<div class="feed-title">' + esc(s.title || s.sku) + '</div>'
+        + '<div class="feed-meta">' + esc(s.brand||'') + (s.category?' · '+esc(s.category):'') + ' · <span style="color:'+color+'">' + esc(s.platform) + '</span></div>'
+      + '</div>'
+      + '<div class="feed-right">'
+        + '<div class="feed-price">' + (s.salePrice ? fmtD(s.salePrice) : '—') + '</div>'
+        + '<div class="feed-date">' + agoStr + '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ── Sales table ──────────────────────────────────────────────
+function renderSales() {
+  var platform = document.getElementById('fPlatform').value;
+  var drop     = document.getElementById('fDrop').value;
+  var filtered = filterByPeriod(allSales, currentSalesPeriod);
+
+  if (platform) filtered = filtered.filter(function(s){ return s.platform === platform; });
+  if (drop)     filtered = filtered.filter(function(s){ return String(s.dropNum||s.drop) === drop; });
+
+  // Update sales hero stats
+  var rev = filtered.reduce(function(s,r){ return s + (r.salePrice||0); }, 0);
+  var avg = filtered.length > 0 ? rev / filtered.length : 0;
+  var sh = document.getElementById('sh-rev');
+  if (sh) sh.textContent = fmt(rev);
+  var ss2 = document.getElementById('sh-sold');
+  if (ss2) ss2.textContent = filtered.length;
+  var sa = document.getElementById('sh-avg');
+  if (sa) sa.textContent = filtered.length > 0 ? fmt(avg) : '—';
+
+  document.getElementById('salesCount').textContent = filtered.length + ' sales';
+
+  var tbody = document.getElementById('salesBody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No sales match this filter</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(function(s){
+    var diff = s.salePrice && s.listedPrice ? (s.salePrice - s.listedPrice) : null;
+    var diffStr = '';
+    if (diff !== null) {
+      diffStr = diff >= 0
+        ? '<span style="color:var(--green);font-size:9px"> ▲</span>'
+        : '<span style="color:var(--red);font-size:9px"> ▼</span>';
+    }
+    return '<tr>'
+      + '<td class="td-sku">' + esc(s.sku) + '</td>'
+      + '<td class="td-title">' + esc(s.title||'—') + '</td>'
+      + '<td style="font-size:11px;color:var(--ts)">' + esc(s.brand||'—') + '</td>'
+      + '<td>' + platBadge(s.platform) + '</td>'
+      + '<td class="td-money" style="text-align:right">' + (s.listedPrice ? fmtD(s.listedPrice) : '—') + '</td>'
+      + '<td class="td-money" style="text-align:right">' + (s.salePrice ? fmtD(s.salePrice) : '—') + diffStr + '</td>'
+      + '<td class="td-date">' + esc(s.soldDate||'—') + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
+// ── Inventory table ──────────────────────────────────────────
+function renderInv() {
+  var drop   = document.getElementById('iDrop').value;
+  var cat    = document.getElementById('iCat').value;
+  var minAge = parseInt(document.getElementById('iAge').value) || 0;
+
+  var active = allInventory.filter(function(i){
+    return String(i.status||'').toLowerCase() !== 'sold';
+  });
+
+  var flagged = active.filter(function(i){ return daysAgo(i.dateListed) >= 30; });
+  document.getElementById('invActive').textContent  = active.length;
+  document.getElementById('invFlagged').textContent = flagged.length;
+
+  var filtered = active.slice();
+  if (drop)   filtered = filtered.filter(function(i){ return String(i.dropNum||i.drop) === drop; });
+  if (cat)    filtered = filtered.filter(function(i){ return i.category === cat; });
+  if (minAge) filtered = filtered.filter(function(i){ return daysAgo(i.dateListed) >= minAge; });
+
+  // Sort: oldest first when age filter active, else by drop desc
+  if (minAge) {
+    filtered.sort(function(a,b){ return daysAgo(a.dateListed) - daysAgo(b.dateListed); });
+  }
+
+  document.getElementById('invCount').textContent = filtered.length + ' items';
+
+  var tbody = document.getElementById('invBody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No items match</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(function(i){
+    var age   = daysAgo(i.dateListed);
+    var ageCls = age >= 60 ? 'old' : age >= 30 ? 'warn' : '';
+    var ageStr = age >= 999 ? '—' : age + 'd';
+    return '<tr>'
+      + '<td class="td-sku">' + esc(i.sku) + '</td>'
+      + '<td class="td-title">' + esc(i.title||'—') + '</td>'
+      + '<td style="font-size:11px;color:var(--ts)">' + esc(i.brand||'—') + '</td>'
+      + '<td style="font-size:11px;color:var(--ts)">' + esc(i.category||'—') + '</td>'
+      + '<td class="td-money" style="text-align:right">' + (i.price ? fmtD(i.price) : '—') + '</td>'
+      + '<td><span class="td-age ' + ageCls + '">' + ageStr + '</span></td>'
+      + '<td><button class="sell-btn" onclick="quickSell('+JSON.stringify(i.sku)+')">Sell</button></td>'
+      + '</tr>';
+  }).join('');
+}
+
+function quickSell(sku) {
+  sessionStorage.setItem('quickSellSku', sku);
+  window.location.href = 'sold.html?sku=' + encodeURIComponent(sku);
+}
+
+// ── Populate filters ─────────────────────────────────────────
+function populateFilters() {
+  var drops = {};
+  allInventory.forEach(function(i){
+    var d = i.dropNum || i.drop;
+    if (d) drops[d] = true;
+  });
+  var dropNums = Object.keys(drops).sort(function(a,b){ return Number(a)-Number(b); });
+
+  ['fDrop','iDrop','priceDrop'].forEach(function(id){
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">All drops</option>';
+    dropNums.forEach(function(d){
+      sel.innerHTML += '<option value="'+d+'">Drop '+String(d).padStart(2,'0')+'</option>';
+    });
+    if (cur) sel.value = cur;
+  });
+
+  var cats = {};
+  allInventory.forEach(function(i){ if (i.category) cats[i.category] = true; });
+  var catSel = document.getElementById('iCat');
+  var curCat = catSel.value;
+  catSel.innerHTML = '<option value="">All categories</option>';
+  Object.keys(cats).sort().forEach(function(c){
+    catSel.innerHTML += '<option value="'+esc(c)+'">'+esc(c)+'</option>';
+  });
+  if (curCat) catSel.value = curCat;
+}
+
+// ── Pricing ──────────────────────────────────────────────────
+function renderPricing() {
+  var drop   = document.getElementById('priceDrop').value;
+  var filter = document.getElementById('priceFilter').value;
+
+  var items = allInventory.filter(function(i){
+    if (String(i.status||'').toLowerCase() === 'sold') return false;
+    if (drop && String(i.dropNum||i.drop) !== String(drop)) return false;
+    if (filter === 'unconfirmed' && i.priceConfirmed)  return false;
+    if (filter === 'confirmed'   && !i.priceConfirmed) return false;
+    return true;
+  });
+
+  document.getElementById('priceCount').textContent = items.length + ' items';
+
+  var tbody = document.getElementById('pricingBody');
+  if (items.length === 0) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No items match</td></tr>';
+    return;
+  }
+  tbody.innerHTML = items.map(function(item){
+    var edit      = pricingEdits[item.sku] || {};
+    var online    = edit.online    !== undefined ? edit.online    : (item.price       || '');
+    var market    = edit.market    !== undefined ? edit.market    : (item.marketPrice || '');
+    var confirmed = edit.confirmed !== undefined ? edit.confirmed : !!item.priceConfirmed;
+    return '<tr data-sku="'+esc(item.sku)+'">'
+      + '<td class="td-sku">' + esc(item.sku) + '</td>'
+      + '<td class="td-title">' + esc(item.title) + '</td>'
+      + '<td style="font-size:11px">' + esc(item.category) + '</td>'
+      + '<td style="font-size:11px">' + esc(item.condition) + '</td>'
+      + '<td style="text-align:right"><input class="price-edit" type="number" value="'+esc(online)+'" step="1" min="0"'
+      + ' onchange="onPriceEdit(\''+esc(item.sku)+'\',this.value)"'
+      + ' oninput="this.classList.add(\'changed\')"></td>'
+      + '<td style="text-align:right"><span class="market-price" id="mp-'+esc(item.sku)+'">'+(market?'$'+Number(market).toFixed(2):'—')+'</span></td>'
+      + '<td style="text-align:center"><button class="confirm-btn'+(confirmed?' confirmed':'')+'" id="cb-'+esc(item.sku)+'"'
+      + ' onclick="toggleConfirm(\''+esc(item.sku)+'\')">'+(confirmed?'✓ confirmed':'Confirm')+'</button></td>'
+      + '</tr>';
+  }).join('');
+}
+
+function onPriceEdit(sku, val) {
+  if (!pricingEdits[sku]) pricingEdits[sku] = {};
+  var num    = parseFloat(val) || 0;
+  var market = num > 0 ? (num - 0.01).toFixed(2) : '';
+  pricingEdits[sku].online    = num;
+  pricingEdits[sku].market    = market;
+  pricingEdits[sku].confirmed = false;
+  var mpEl = document.getElementById('mp-' + sku);
+  if (mpEl) mpEl.textContent = market ? '$' + market : '—';
+  var btn = document.getElementById('cb-' + sku);
+  if (btn) { btn.textContent = 'Confirm'; btn.className = 'confirm-btn'; }
+}
+
+function toggleConfirm(sku) {
+  if (!pricingEdits[sku]) pricingEdits[sku] = {};
+  var confirmed = !pricingEdits[sku].confirmed;
+  pricingEdits[sku].confirmed = confirmed;
+  var btn = document.getElementById('cb-' + sku);
+  if (btn) { btn.textContent = confirmed ? '✓ confirmed' : 'Confirm'; btn.className = 'confirm-btn' + (confirmed ? ' confirmed' : ''); }
+}
+
+function confirmAllVisible() {
+  document.querySelectorAll('#pricingBody tr[data-sku]').forEach(function(row){
+    var sku = row.getAttribute('data-sku');
+    if (!pricingEdits[sku]) pricingEdits[sku] = {};
+    pricingEdits[sku].confirmed = true;
+    var btn = document.getElementById('cb-' + sku);
+    if (btn) { btn.textContent = '✓ confirmed'; btn.className = 'confirm-btn confirmed'; }
+  });
+  showToast('All visible items confirmed');
+}
+
+function pushPricesToSheet() {
+  var updates = [];
+  Object.keys(pricingEdits).forEach(function(sku){
+    var e = pricingEdits[sku];
+    if (e.confirmed && e.online) updates.push({ sku:sku, price:e.online, marketPrice:e.market, priceConfirmed:true });
+  });
+  if (updates.length === 0) {
+    document.getElementById('pricingPushSt').textContent = 'Confirm some prices first';
+    document.getElementById('pricingPushSt').className = 'pst err';
+    return;
+  }
+  var st = document.getElementById('pricingPushSt');
+  st.textContent = 'Pushing ' + updates.length + ' prices...'; st.className = 'pst';
+  fetch(APPS, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ action:'bulkUpdatePrices', updates:updates }) })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if (!data.success) throw new Error(data.error || 'Failed');
+    st.textContent = data.updated + ' prices saved ✓'; st.className = 'pst ok';
+    showToast(data.updated + ' prices confirmed');
+    loadAll();
+  })
+  .catch(function(e){ st.textContent = 'Error: ' + e.message; st.className = 'pst err'; });
+}
+
+// ── Init ─────────────────────────────────────────────────────
+loadAll();
+setInterval(loadAll, 300000); // refresh every 5 min
+</script>
+<script src="auth.js"></script>
+</body>
+</html>
